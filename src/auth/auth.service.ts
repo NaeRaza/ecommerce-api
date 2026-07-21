@@ -1,6 +1,6 @@
 import {
+  ConflictException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -23,6 +23,12 @@ export class AuthService {
   //           - crée l'utilisateur en DB
   //           - retourne l'utilisateur créé
   async register(name: string, email: string, password: string) {
+    const existingUser = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) throw new ConflictException('Email déjà existant');
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prismaService.user.create({

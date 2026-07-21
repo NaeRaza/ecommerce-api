@@ -13,7 +13,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { JwtGuard } from 'src/auth/jwt.guard';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'generated/prisma/enums';
@@ -26,6 +26,13 @@ export class ProductsController {
   // Étape 1 — Injecte le ProductsService dans le constructor
   constructor(private readonly productsService: ProductsService) {}
   // Étape 2 — GET /products : retourne tous les produits
+
+  @ApiQuery({ name: 'page', required: false, type: 'number' })
+  @ApiQuery({ name: 'limit', required: false, type: 'number' })
+  @ApiQuery({ name: 'search', required: false, type: 'string' })
+  @ApiQuery({ name: 'minPrice', required: false, type: 'number' })
+  @ApiQuery({ name: 'maxPrice', required: false, type: 'number' })
+  @ApiQuery({ name: 'categoryId', required: false, type: 'string' })
   @Get()
   findAll(@Query() query: QueryProductDto) {
     return this.productsService.findAll(query);
