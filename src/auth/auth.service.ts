@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -39,7 +40,11 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendWelcome(name, email);
+    try {
+      await this.mailService.sendWelcome(name, email);
+    } catch (error) {
+      console.error('Erreur envoi mail bienvenue:', error);
+    }
 
     const {
       password: _,
@@ -94,7 +99,11 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendResetPassword(email, user.name, token);
+    try {
+      await this.mailService.sendResetPassword(email, user.name, token);
+    } catch (error) {
+      throw new InternalServerErrorException("Erreur lors de l'envoi du mail");
+    }
 
     return { message: 'Un email de réinitialisation a été envoyé' };
   }

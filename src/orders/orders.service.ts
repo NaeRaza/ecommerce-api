@@ -77,7 +77,11 @@ export class OrdersService {
     const email = order.user.email;
 
     if (status === OrderStatus.CONFIRMED) {
-      await this.mailService.sendOrderConfirmed(email, order.id);
+      try {
+        await this.mailService.sendOrderConfirmed(email, order.id);
+      } catch (error) {
+        console.error('Erreur envoi mail commande:', error);
+      }
     }
 
     const {
