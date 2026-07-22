@@ -167,4 +167,63 @@ export class AuthService {
 
     //           resetToken: null, resetTokenExpiry: null
   }
+  async logout(id: string) {
+    const user = await this.prismaService.user.update({
+      where: { id },
+      data: {
+        refreshToken: null,
+      },
+    });
+    const {
+      password: _,
+      resetToken: __,
+      refreshToken: ___,
+      resetTokenExpiry: ____,
+      ...result
+    } = user;
+
+    return result;
+  }
+
+  async refresh(refreshToken: string) {
+    // Étape 1 — Décoder le refresh token pour obtenir l'userId
+    //           this.jwtService.verify(refreshToken)
+
+    let sub: string;
+    try {
+      const verifyToken = this.jwtService.verify(refreshToken);
+      sub = verifyToken.sub;
+    } catch {
+      throw new UnauthorizedException('Refresh token invalide');
+    }
+
+    // Étape 2 — Trouver l'utilisateur en DB par son id
+    const user = await this.prismaService.user.findUnique({
+      where: { id: sub },
+    });
+
+    // Étape 3 — Vérifier que le refreshToken correspond au hash en DB
+    //           bcrypt.compare(refreshToken, user.refreshToken)
+
+    if (!user) {
+      throw new UnauthorizedException('Token invalide');
+    }
+
+    if (!user.refreshToken) {
+      throw new UnauthorizedException('Token expiré');
+    }
+    const isValidToken = await bcrypt.compare(refreshToken, user.refreshToken);
+
+    if (!isValidToken) {
+      throw new UnauthorizedException('Refresh token invalide');
+    }
+
+    // Étape 4 — Générer un nouvel access token et retourner
+    return {
+      access_token: this.jwtService.sign(
+        { sub: user.id, email: user.email, role: user.role },
+        { expiresIn: '15m' },
+      ),
+    };
+  }
 }
