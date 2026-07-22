@@ -29,6 +29,7 @@ model User {
   password String
   resetToken String?
   resetTokenExpiry DateTime?
+  refreshToken String?
   order Order[]
   role Role @default(CLIENT)
 }

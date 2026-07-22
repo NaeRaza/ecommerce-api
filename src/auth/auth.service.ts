@@ -70,12 +70,29 @@ export class AuthService {
     if (!verifyPassword) {
       throw new UnauthorizedException('Mot de passe incorrect');
     }
+
+    const refresh_token = this.jwtService.sign(
+      { sub: user.id },
+      { expiresIn: '7d' },
+    );
+
+    const access_token = this.jwtService.sign(
+      { sub: user.id, email: user.email, role: user.role },
+      { expiresIn: '15m' },
+    );
+
+    const hashedRefreshToken = await bcrypt.hash(refresh_token, 10);
+
+    await this.prismaService.user.update({
+      where: { email },
+      data: {
+        refreshToken: hashedRefreshToken,
+      },
+    });
+
     return {
-      access_token: this.jwtService.sign({
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      }),
+      refresh_token,
+      access_token,
     };
   }
 
